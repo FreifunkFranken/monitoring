@@ -1,0 +1,38 @@
+#!/bin/bash
+#
+# count originators and alert if too less
+#
+
+# source utils.sh (hardcoded path for now)
+#PROGPATH=`echo ${0} | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
+#. $PROGPATH/utils.sh
+. /usr/lib/nagios/plugins/utils.sh
+
+#BATCTL=`which batctl`
+BATCTL=/usr/local/sbin/batctl
+INT=$1
+WARN=$2
+CRIT=$3
+
+if [ "x${1}" = "x" ]; then
+  echo "Count available originators in the mesh for an interface"
+  echo "Usage: $0 <interface> <warn> <crit>"
+  echo
+  exit 0
+fi
+
+originators=`${BATCTL} -m ${INT} originators | tail -n+3 | wc -l`
+
+if [ ${originators} -lt ${CRIT} ]; then
+  RET=${STATE_CRITICAL}
+  MSG="critical: only ${originators} originators available"
+elif [ ${originators} -lt ${WARN} ]; then
+  RET=${STATE_WARN}
+  MSG="warning: only ${originators} originators available"
+else
+  RET=${STATE_OK}
+  MSG="ok: ${originators} originators available"
+fi
+
+echo ${MSG}
+exit ${RET}
